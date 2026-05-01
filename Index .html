@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analyst Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Playfair+Display:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0A0E1C;
+            --bg-secondary: #151A2E;
+            --bg-card: #1A2038;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A8B2C8;
+            --text-muted: #6B7B94;
+            --accent-cyan: #00D9FF;
+            --accent-pink: #FF6B9D;
+            --accent-green: #6BCF7F;
+            --accent-yellow: #FFD93D;
+            --accent-purple: #A78BFA;
+            --accent-orange: #FF8C42;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Network Graph Hero Section */
+        .hero-section {
+            position: relative;
+            height: 75vh; 
+            display: flex;
+            align-items: flex-start; /* Aligns text to the top */
+            justify-content: center;
+            overflow: hidden;
+            padding-top: 8vh; /* Just a little bit of space at the top */
+        }
+
+        #network-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .hero-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 400;
+            margin-bottom: 1rem;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        /* Node Tooltip */
+        .node-tooltip {
+            position: fixed;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-width: 280px;
+            max-width: 320px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 20px 60px rgba(0, 217, 255, 0.2);
+        }
+
+        .node-tooltip.active {
+            opacity: 1;
+        }
+
+        .tooltip-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .tooltip-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .tooltip-projects {
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        /* Main Content Sections */
+        .section {
+            padding: 6rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            margin-bottom: 4rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .section-header.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .section-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+        }
+
+        /* About Section */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .profile-image-container {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .profile-image {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid var(--accent-cyan);
+            box-shadow: 0 20px 60px rgba(0, 217, 255, 0.2);
+        }
+
+        .profile-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        .about-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .about-text p {
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-cyan);
+        }
+
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Projects Section */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .project-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 20px 60px rgba(0, 217, 255, 0.15);
+        }
+
+        .project-visual {
+            height: 280px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .project-card:nth-child(2) .project-visual {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-orange));
+        }
+
+        .project-card:nth-child(3) .project-visual {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-yellow));
+        }
+
+        .project-card:nth-child(4) .project-visual {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+        }
+
+        .project-icon {
+            font-size: 5rem;
+            opacity: 0.3;
+        }
+
+        .project-content {
+            padding: 2rem;
+        }
+
+        .project-tags {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 0.65rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--accent-cyan);
+            border-radius: 20px;
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+        }
+
+        .project-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .project-description {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .project-metrics {
+            display: flex;
+            gap: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric {
+            flex: 1;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .metric-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Experience Section */
+        .experience-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        .experience-item {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 3rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .experience-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .experience-item:last-child {
+            border-bottom: none;
+        }
+
+        .experience-period {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .experience-company {
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            margin-top: 0.5rem;
+        }
+
+        .experience-details h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .experience-description {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        /* Skills Section */
+        .skills-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .skill-category {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease, border-color 0.3s ease;
+        }
+
+        .skill-category.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .skill-category:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .skill-category-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .skill-list {
+            list-style: none;
+        }
+
+        .skill-list li {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .skill-list li:before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+        }
+
+        /* Contact Section */
+        .contact-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .contact-info h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .contact-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .contact-links {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .contact-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .contact-link:hover {
+            transform: translateX(10px);
+            border-color: var(--accent-cyan);
+        }
+
+        .contact-icon {
+            font-size: 1.5rem;
+        }
+
+        .contact-text h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+            font-weight: 700;
+        }
+
+        .contact-text p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-secondary);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        footer p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .about-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-image-container {
+                position: relative;
+                max-width: 250px;
+                margin: 0 auto 2rem;
+            }
+
+            .projects-grid,
+            .skills-container,
+            .contact-container {
+                grid-template-columns: 1fr;
+            }
+
+            .experience-item {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scroll Progress Bar */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink));
+            z-index: 9999;
+            transition: width 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="scroll-progress"></div>
+
+    <div class="node-tooltip" id="nodeTooltip">
+        <div class="tooltip-title" id="tooltipTitle"></div>
+        <div class="tooltip-description" id="tooltipDescription"></div>
+        <div class="tooltip-projects" id="tooltipProjects"></div>
+    </div>
+
+    <section class="hero-section">
+        <canvas id="network-canvas"></canvas>
+        <div class="hero-content">
+            <h1 class="hero-title">Varna Gobbur</h1>
+            <p class="hero-subtitle">Data Analyst • Arizona</p>
+        </div>
+    </section>
+
+    <section class="section" id="about">
+        <div class="section-header">
+           <!-- <div class="section-label">INTRODUCTION</div>-->
+            <h2 class="section-title">Turning Data Into Decisions</h2>
+            <p class="section-description">I help companies make sense of complex data and transform numbers into actionable insights that drive real business outcomes.</p>
+        </div>
+        
+        <div class="about-grid">
+            <div class="profile-image-container">
+                <div class="profile-image">
+                    <div class="profile-placeholder">VG</div>
+                </div>
+            </div>
+
+            <div class="about-text">
+                <p>With over 3 years of experience in data analysis, I specialize in building predictive models, designing intuitive dashboards, and conducting statistical analyses that inform strategic decisions.</p>
+                <p>My approach combines technical expertise with strong business acumen, ensuring that every analysis tells a clear story and drives measurable impact.</p>
+                <p>I'm passionate about automation, visualization, and finding patterns in chaos. Whether it's reducing customer churn, optimizing marketing campaigns, or forecasting revenue, I love turning raw data into competitive advantages.</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">$2.5M</div>
+                    <div class="stat-label">Revenue Impact</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">95%</div>
+                    <div class="stat-label">Model Accuracy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">60hrs</div>
+                    <div class="stat-label">Saved Monthly</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Projects Delivered</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="projects">
+        <div class="section-header">
+            <!--<div class="section-label">FEATURED WORK</div>-->
+            <h2 class="section-title">Projects That Matter</h2>
+            <p class="section-description">A selection of my most impactful work, from predictive modeling to dashboard design.</p>
+        </div>
+        
+        <div class="projects-grid">
+            <div class="project-card">
+                <div class="project-visual">
+                    <div class="project-icon">📊</div>
+                </div>
+                <div class="project-content">
+                    <div class="project-tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">ML</span>
+                        <span class="tag">Tableau</span>
+                    </div>
+                    <h3 class="project-title">Customer Churn Prediction</h3>
+                    <p class="project-description">Built a machine learning model using Random Forest and XGBoost to identify at-risk customers 30 days before churn. Deployed to production serving 500K+ users daily.</p>
+                    <div class="project-metrics">
+                        <div class="metric">
+                            <div class="metric-value">95%</div>
+                            <div class="metric-label">Accuracy</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">23%</div>
+                            <div class="metric-label">Churn Reduced</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">$1.5M</div>
+                            <div class="metric-label">Annual Savings</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="project-visual">
+                    <div class="project-icon">📈</div>
+                </div>
+                <div class="project-content">
+                    <div class="project-tags">
+                        <span class="tag">SQL</span>
+                        <span class="tag">Power BI</span>
+                        <span class="tag">ETL</span>
+                    </div>
+                    <h3 class="project-title">Real-Time Sales Dashboard</h3>
+                    <p class="project-description">Created an automated ETL pipeline and interactive dashboard providing real-time insights into sales performance across 50+ locations. Used by executive team daily.</p>
+                    <div class="project-metrics">
+                        <div class="metric">
+                            <div class="metric-value">50+</div>
+                            <div class="metric-label">Locations</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">75%</div>
+                            <div class="metric-label">Time Saved</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">Daily</div>
+                            <div class="metric-label">Updates</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="project-visual">
+                    <div class="project-icon">🎯</div>
+                </div>
+                <div class="project-content">
+                    <div class="project-tags">
+                        <span class="tag">R</span>
+                        <span class="tag">Statistics</span>
+                        <span class="tag">A/B Testing</span>
+                    </div>
+                    <h3 class="project-title">Marketing Campaign Optimization</h3>
+                    <p class="project-description">Designed and analyzed 15+ A/B tests to optimize email marketing campaigns. Statistical analysis revealed key insights that transformed the marketing strategy.</p>
+                    <div class="project-metrics">
+                        <div class="metric">
+                            <div class="metric-value">34%</div>
+                            <div class="metric-label">Conversion↑</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">2.5x</div>
+                            <div class="metric-label">ROI</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">15+</div>
+                            <div class="metric-label">Tests</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="project-visual">
+                    <div class="project-icon">💰</div>
+                </div>
+                <div class="project-content">
+                    <div class="project-tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">Time Series</span>
+                        <span class="tag">ARIMA</span>
+                    </div>
+                    <h3 class="project-title">Revenue Forecasting System</h3>
+                    <p class="project-description">Built time-series forecasting models using ARIMA and Prophet to predict quarterly revenue with high accuracy, enabling better resource planning and strategic decisions.</p>
+                    <div class="project-metrics">
+                        <div class="metric">
+                            <div class="metric-value">92%</div>
+                            <div class="metric-label">Accuracy</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">Q4</div>
+                            <div class="metric-label">Forecast</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">3-Yr</div>
+                            <div class="metric-label">Projection</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="experience">
+        <div class="section-header">
+            <!--<div class="section-label">CAREER PATH</div>-->
+            <h2 class="section-title">Where I've Worked</h2>
+            <p class="section-description">Building expertise across different industries and company stages.</p>
+        </div>
+        
+        <div class="experience-list">
+            <div class="experience-item">
+                <div class="experience-meta">
+                    <div class="experience-period">Nov 2025 — Present</div>
+                    <div class="experience-company">SVT IT Infotech</div>
+                </div>
+                <div class="experience-details">
+                    <h3>Data Analyst</h3>
+                    <p class="experience-description">Currently working on data analysis projects, building dashboards, and providing actionable insights to drive business decisions. Collaborating with cross-functional teams to identify trends and optimize processes through data-driven strategies.</p>
+                </div>
+            </div>
+
+            <div class="experience-item">
+                <div class="experience-meta">
+                    <div class="experience-period">Sept 2024 — Oct 2025</div>
+                    <div class="experience-company">Northern Arizona University</div>
+                </div>
+                <div class="experience-details">
+                    <h3>Research Analyst</h3>
+                    <p class="experience-description">Conducted research and data analysis to support academic projects. Performed statistical analysis, data visualization, and contributed to research publications. Collaborated with faculty and students to design experiments and interpret complex datasets.</p>
+                </div>
+            </div>
+
+            <div class="experience-item">
+                <div class="experience-meta">
+                    <div class="experience-period">Mar 2024 — Aug 2024</div>
+                    <div class="experience-company">Expand IT</div>
+                </div>
+                <div class="experience-details">
+                    <h3>Software Engineer - Analyst</h3>
+                    <p class="experience-description">Worked as a software engineer with a focus on data analysis. Developed analytical tools and automated reporting systems. Integrated data pipelines and performed quality assurance on data-driven applications.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="skills">
+        <div class="section-header">
+            <!--<div class="section-label">EXPERTISE</div>-->
+            <h2 class="section-title">Technical Skills</h2>
+            <p class="section-description">Tools and technologies I use every day to solve complex problems.</p>
+        </div>
+        
+        <div class="skills-container">
+            <div class="skill-category">
+                <h3 class="skill-category-title">Programming</h3>
+                <ul class="skill-list">
+                    <li>Python (pandas, numpy, scikit-learn)</li>
+                    <li>R (dplyr, ggplot2, tidyverse)</li>
+                    <li>SQL (PostgreSQL, MySQL, BigQuery)</li>
+                    <li>Git & Version Control</li>
+                </ul>
+            </div>
+
+            <div class="skill-category">
+                <h3 class="skill-category-title">Visualization</h3>
+                <ul class="skill-list">
+                    <li>Tableau Desktop & Server</li>
+                    <li>Power BI & DAX</li>
+                    <li>Matplotlib & Seaborn</li>
+                    <li>D3.js & Plotly</li>
+                </ul>
+            </div>
+
+            <div class="skill-category">
+                <h3 class="skill-category-title">Analysis</h3>
+                <ul class="skill-list">
+                    <li>Statistical Analysis</li>
+                    <li>Machine Learning</li>
+                    <li>A/B Testing</li>
+                    <li>Time Series Forecasting</li>
+                </ul>
+            </div>
+
+            <div class="skill-category">
+                <h3 class="skill-category-title">Data Engineering</h3>
+                <ul class="skill-list">
+                    <li>ETL Pipeline Development</li>
+                    <li>Data Warehousing</li>
+                    <li>Apache Spark</li>
+                    <li>Cloud Platforms (AWS, GCP)</li>
+                </ul>
+            </div>
+
+            <div class="skill-category">
+                <h3 class="skill-category-title">Business Intelligence</h3>
+                <ul class="skill-list">
+                    <li>Dashboard Design</li>
+                    <li>KPI Development</li>
+                    <li>Executive Reporting</li>
+                    <li>Data Storytelling</li>
+                </ul>
+            </div>
+
+            <div class="skill-category">
+                <h3 class="skill-category-title">Soft Skills</h3>
+                <ul class="skill-list">
+                    <li>Stakeholder Management</li>
+                    <li>Cross-functional Collaboration</li>
+                    <li>Technical Documentation</li>
+                    <li>Presentation & Communication</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="contact">
+        <div class="section-header">
+            <!--<div class="section-label">GET IN TOUCH</div>-->
+            <h2 class="section-title">Let's Work Together</h2>
+        </div>
+        
+        <div class="contact-container">
+            <div class="contact-info">
+                <h2>Ready to collaborate?</h2>
+                <p class="contact-description">I'm always interested in hearing about new opportunities, interesting data challenges, and potential collaborations. Feel free to reach out!</p>
+            </div>
+
+            <div class="contact-links">
+                <a href="mailto:varna4313@gmail.com" class="contact-link">
+                    <div class="contact-icon">✉️</div>
+                    <div class="contact-text">
+                        <h4>Email</h4>
+                        <p>varna4313@gmail.com</p>
+                    </div>
+                </a>
+
+                <a href="https://www.linkedin.com/in/varna-gobbur-4a1605213" class="contact-link" target="_blank">
+                    <div class="contact-icon">💼</div>
+                    <div class="contact-text">
+                        <h4>LinkedIn</h4>
+                        <p>linkedin.com/in/varna-gobbur-4a1605213</p>
+                    </div>
+                </a>
+
+                <a href="https://github.com/yourname" class="contact-link" target="_blank">
+                    <div class="contact-icon">💻</div>
+                    <div class="contact-text">
+                        <h4>GitHub</h4>
+                        <p>github.com/yourname</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; Varna Gobbur. Built with passion for data and design.</p>
+    </footer>
+
+    <script>
+        // Network Graph Javascript
+        const canvas = document.getElementById('network-canvas');
+        const ctx = canvas.getContext('2d');
+        const tooltip = document.getElementById('nodeTooltip');
+
+        // Set canvas size safely
+        function resizeCanvas() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Nodes defined via screen percentages (Ratios)
+        const nodes = [
+            { name: 'ABOUT ME', xRatio: 0.2, yRatio: 0.55, radius: 45, color: '#A78BFA', description: 'Learn more about my background', projects: 'Click to navigate', link: '#about' },
+            { name: 'WORK EXP', xRatio: 0.35, yRatio: 0.85, radius: 45, color: '#FF8C42', description: 'See my career path', projects: 'Click to navigate', link: '#experience' },
+            { name: 'PROJECTS', xRatio: 0.5, yRatio: 0.50, radius: 45, color: '#00D9FF', description: 'View my featured work', projects: 'Click to navigate', link: '#projects' },
+            { name: 'CONTACT', xRatio: 0.65, yRatio: 0.85, radius: 45, color: '#E85D75', description: 'Get in touch', projects: 'Click to navigate', link: '#contact' },
+            { name: 'SKILLS', xRatio: 0.8, yRatio: 0.55, radius: 45, color: '#FFD93D', description: 'Technical expertise & tools', projects: 'Click to navigate', link: '#skills' }
+        ];
+
+        // Connections between the node indices
+        const connections = [
+            [0, 1], // About to Work
+            [0, 2], // About to Projects
+            [1, 2], // Work to Projects
+            [2, 3], // Projects to Contact
+            [2, 4], // Projects to Skills
+            [3, 4]  // Contact to Skills
+        ];
+
+        // Particles traveling along connections
+        const particles = [];
+        connections.forEach(([from, to]) => {
+            particles.push({
+                from,
+                to,
+                progress: Math.random(),
+                speed: 0.002 + Math.random() * 0.003
+            });
+        });
+
+        // Start nodes exactly in the center so they don't break on load
+        nodes.forEach(node => {
+            node.x = window.innerWidth / 2;
+            node.y = window.innerHeight / 2;
+            node.vx = 0;
+            node.vy = 0;
+            node.pulse = Math.random() * Math.PI * 2;
+        });
+
+        let mouseX = 0;
+        let mouseY = 0;
+        let hoveredNode = null;
+
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+
+            hoveredNode = null;
+            nodes.forEach(node => {
+                const dx = mouseX - node.x;
+                const dy = mouseY - node.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < node.radius) {
+                    hoveredNode = node;
+                    canvas.style.cursor = 'pointer';
+                }
+            });
+
+            if (!hoveredNode) {
+                canvas.style.cursor = 'default';
+            }
+            
+           
+        });
+        // Exact Click Detection for Navigation
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            nodes.forEach(node => {
+                const dx = clickX - node.x;
+                const dy = clickY - node.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // If the click happened inside a node circle
+                if (distance <= node.radius) {
+                    const target = document.querySelector(node.link);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                }
+            });
+        });
+
+        // Animation Engine
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate movement
+            nodes.forEach(node => {
+                // Determine exactly where this node should sit based on current screen size
+                const currentTargetX = canvas.width * node.xRatio;
+                const currentTargetY = canvas.height * node.yRatio;
+
+                const dx = currentTargetX - node.x;
+                const dy = currentTargetY - node.y;
+                
+                // Spring physics pull them gently to their target spots
+                node.vx += dx * 0.015;
+                node.vy += dy * 0.015;
+                
+                // Damping makes them settle smoothly
+                node.vx *= 0.85;
+                node.vy *= 0.85;
+                
+                // Apply movement
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                // Visual pulsing effect
+                node.pulse += 0.02;
+            });
+
+            // Draw connection lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            connections.forEach(([from, to]) => {
+                ctx.beginPath();
+                ctx.moveTo(nodes[from].x, nodes[from].y);
+                ctx.lineTo(nodes[to].x, nodes[to].y);
+                ctx.stroke();
+            });
+
+            // Draw traveling particles
+            particles.forEach(particle => {
+                const fromNode = nodes[particle.from];
+                const toNode = nodes[particle.to];
+                
+                const x = fromNode.x + (toNode.x - fromNode.x) * particle.progress;
+                const y = fromNode.y + (toNode.y - fromNode.y) * particle.progress;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = fromNode.color;
+                ctx.fill();
+                
+                particle.progress += particle.speed;
+                if (particle.progress >= 1) particle.progress = 0;
+            });
+
+            // Draw nodes
+            nodes.forEach(node => {
+                const isHovered = hoveredNode === node;
+                const currentRadius = node.radius + Math.sin(node.pulse) * 3;
+                const drawRadius = isHovered ? currentRadius * 1.15 : currentRadius;
+                
+                // Glow effect
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, drawRadius + 5, 0, Math.PI * 2);
+                const gradient = ctx.createRadialGradient(node.x, node.y, drawRadius, node.x, node.y, drawRadius + 5);
+                gradient.addColorStop(0, node.color + '40');
+                gradient.addColorStop(1, node.color + '00');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // Main circle outline
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, drawRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = node.color;
+                ctx.lineWidth = isHovered ? 4 : 2.5;
+                ctx.stroke();
+                
+                // Faded center fill
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, drawRadius - 5, 0, Math.PI * 2);
+                ctx.fillStyle = node.color + '20';
+                ctx.fill();
+                
+                // Node Text
+                ctx.fillStyle = node.color;
+                ctx.font = isHovered ? 'bold 14px Space Mono' : 'bold 12px Space Mono';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.name, node.x, node.y);
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Start everything up
+        setTimeout(() => {
+            animate();
+        }, 300);
+
+        // Standard Scroll Progress Bar Logic
+        window.addEventListener('scroll', () => {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight - windowHeight;
+            const scrolled = window.scrollY;
+            const progress = (scrolled / documentHeight) * 100;
+            document.querySelector('.scroll-progress').style.width = progress + '%';
+        });
+
+        // Fade in observer logic
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.section-header, .project-card, .experience-item, .skill-category').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
